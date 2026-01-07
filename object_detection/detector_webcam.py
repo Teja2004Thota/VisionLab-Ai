@@ -17,18 +17,23 @@ CONF_THRESHOLD = 0.5
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-CAMERA_INDEX =1   # default webcam (change if needed)
-
+CAMERA_INDEX = 1   # default webcam (local only)
 
 
 # ===================== MAIN FUNCTION =====================
 def detect_webcam(model_path=None, show=True):
     """
     Performs real-time object detection using webcam.
-    Shows live feed and saves detected webcam video.
-    Press 'Q' to stop.
+    Webcam is supported ONLY in local execution.
     Returns frontend-ready summary dictionary.
     """
+
+    # ---------- CLOUD SAFETY CHECK ----------
+    if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("PORT"):
+        return {
+            "mode": "webcam",
+            "error": "Webcam detection is supported only in local execution.",
+        }
 
     # ---------- Load Model ----------
     model = get_model(model_path)
@@ -38,8 +43,7 @@ def detect_webcam(model_path=None, show=True):
     if not cap.isOpened():
         raise RuntimeError(
             f"❌ Unable to open webcam at index {CAMERA_INDEX}"
-    )
-
+        )
 
     # ---------- Output Webcam Video ----------
     output_video_path = os.path.join(
@@ -49,7 +53,7 @@ def detect_webcam(model_path=None, show=True):
     out = cv2.VideoWriter(
         output_video_path,
         fourcc,
-        25,  # webcam FPS fallback
+        25,
         (FRAME_WIDTH, FRAME_HEIGHT)
     )
 
@@ -85,7 +89,6 @@ def detect_webcam(model_path=None, show=True):
                 label = model.names[cls_id]
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-                # Draw
                 cv2.rectangle(frame, (x1, y1), (x2, y2),
                               (0, 255, 0), 2)
                 cv2.putText(
@@ -98,12 +101,10 @@ def detect_webcam(model_path=None, show=True):
                     2
                 )
 
-                # Stats
                 confidences.append(confidence)
                 class_counts[label] += 1
                 class_conf_sum[label] += confidence
 
-        # ---------- FPS ----------
         elapsed_time = time.time() - start_time
         fps = frame_count / elapsed_time if elapsed_time > 0 else 0
 
