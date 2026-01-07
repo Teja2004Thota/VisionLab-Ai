@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+output/
+*.pyc
+.env
+# YOLO large model weights (do not push)
+Web_app/yolov8l.pt
+Web_app/yolov8x.pt

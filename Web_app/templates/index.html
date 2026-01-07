@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VisionLab AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="background"></div>
+
+<header class="top-bar">
+    <h1>VisionLab<span>AI</span></h1>
+    <p>Intelligent Object Detection Playground</p>
+</header>
+
+<main class="container">
+
+    <!-- LEFT PANEL -->
+    <section class="panel controls">
+        <h3>Detection Controls</h3>
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <label>Input Type</label>
+            <select name="input_type" required>
+    <option value="image"
+        {% if result and result.mode == "image" %}selected{% endif %}>
+        Image
+    </option>
+
+    <option value="video"
+        {% if result and result.mode == "video" %}selected{% endif %}>
+        Video
+    </option>
+
+    <option value="webcam"
+        {% if result and result.mode == "webcam" %}selected{% endif %}>
+        Webcam
+    </option>
+</select>
+
+            <label style="margin-top:15px;">YOLOv8 Model</label>
+            <select name="model_path" required>
+                <option value="yolov8n.pt">YOLOv8 Nano (Fastest, Low Accuracy)</option>
+                
+                <option value="yolov8m.pt" selected>YOLOv8 Medium (Recommended)</option>
+                
+            </select>
+            <small>
+                Larger models improve accuracy but reduce FPS and require more resources.
+            </small>
+
+            <label style="margin-top:15px;">Upload File</label>
+            <input type="file" name="file"
+            {% if result and result.mode == "webcam" %}disabled{% endif %}>
+
+            <small>Required for image & video only</small>
+
+            <button type="submit" class="play-btn">
+                ▶ Run Detection
+            </button>
+        </form>
+
+        {% if webcam_message %}
+        <div class="info-box">
+            <p>{{ webcam_message }}</p>
+            <p><b>Note:</b> Webcam runs in OpenCV window. Press <b>Q</b> to stop.</p>
+        </div>
+        {% endif %}
+    </section>
+
+<!-- RIGHT PANEL -->
+<section class="panel preview">
+
+    <div class="preview-grid">
+
+        {% if uploaded_image_url %}
+        <div class="preview-card">
+            <h4>Original</h4>
+            <img src="{{ uploaded_image_url }}">
+        </div>
+        {% endif %}
+
+        {% if image_url %}
+        <div class="preview-card">
+            <h4>Detected</h4>
+            <img src="{{ image_url }}">
+        </div>
+        {% endif %}
+
+    </div>
+
+    {% if result %}
+    <div class="summary">
+        <h3>📊 Detection Summary</h3>
+        <p class="muted">
+            Analysis completed successfully. Below are real-time detection and performance metrics.
+        </p>
+
+        <!-- MAIN METRICS -->
+        <div class="summary-grid">
+            <div class="stat">
+                <span>Total Detections</span>
+                <strong>{{ result.detections }}</strong>
+            </div>
+
+            <div class="stat">
+                <span>FPS</span>
+                <strong>{{ "%.2f"|format(result.fps) }}</strong>
+            </div>
+
+            {% if result.avg_confidence is defined %}
+            <div class="stat">
+                <span>Avg Confidence</span>
+                <strong>{{ "%.2f"|format(result.avg_confidence) }}</strong>
+            </div>
+            {% endif %}
+
+            {% if result.inference_time_ms is defined %}
+            <div class="stat">
+                <span>Inference Time (ms)</span>
+                <strong>{{ "%.1f"|format(result.inference_time_ms) }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- PER-CLASS STATS -->
+        {% if result.class_counts %}
+        <div style="margin-top:30px;">
+            <h3>📌 Per-Class Detection Stats</h3>
+
+            <table style="width:100%; margin-top:10px; border-collapse:collapse;">
+                <thead>
+                    <tr style="text-align:left; color:#94a3b8;">
+                        <th>Class</th>
+                        <th>Count</th>
+                        <th>Avg Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cls, count in result.class_counts.items() %}
+                    <tr>
+                        <td>{{ cls }}</td>
+                        <td>{{ count }}</td>
+                        <td>{{ "%.2f"|format(result.class_avg_confidence[cls]) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if result.mode == "video" %}
+<div class="info-box" style="margin-top:15px;">
+    <p>
+        <h3>🎬 <b>Detected video is saved locally.</b><br>
+        Please check the <b>output / detected video directory</b> on your system to view the processed video.
+    </p>
+</div>
+{% endif %}
+
+
+</section>
+
+</main>
+
+<footer class="footer">
+    Powered by YOLO • OpenCV • Flask
+</footer>
+
+</body>
+</html>

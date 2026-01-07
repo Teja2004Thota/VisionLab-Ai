@@ -1,0 +1,12 @@
+MODE: VIDEO
+Total Frames Processed: 313
+Total Detections: 1419
+Average Confidence: 0.63
+Average FPS: 10.48
+
+Detections Per Class:
+- car: 1298
+- bus: 76
+- train: 38
+- truck: 5
+- toilet: 2
